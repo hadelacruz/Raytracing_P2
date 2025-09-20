@@ -28,11 +28,11 @@ fn main() -> Result<(), Error> {
         .build_global()
         .expect("Failed to build thread pool");
     
-    println!("🎮 Raytracer de Minecraft");
-    println!("🖥️  Usando {} núcleos de CPU para renderizado paralelo", num_cpus);
+    println!("Minecraft");
+    println!("Usando {} núcleos de CPU para renderizado paralelo", num_cpus);
     println!("Controles:");
     println!("  WASD - Mover cámara");
-    println!("  Espacio/Shift - Subir/bajar");
+    println!("  Flecha arriba/abajo - Subir/bajar");
     println!("  Arrastrar ratón - Mirar alrededor");
     println!("  ESC - Salir");
     println!();
@@ -41,7 +41,7 @@ fn main() -> Result<(), Error> {
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         WindowBuilder::new()
-            .with_title("Raytracer de Minecraft")
+            .with_title("Humberto Raytracer de Minecraft")
             .with_inner_size(size)
             .with_min_inner_size(size)
             .build(&event_loop)
@@ -56,16 +56,12 @@ fn main() -> Result<(), Error> {
 
     let mut app = App::new();
     
-    println!("Escena inicializada con {} cubos", app.scene.cubes.len());
-    println!("Iniciando renderizado interactivo...");
-
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
             } => {
-                println!("Solicitud de cierre de ventana");
                 *control_flow = ControlFlow::Exit;
             }
             Event::WindowEvent { event, .. } => {

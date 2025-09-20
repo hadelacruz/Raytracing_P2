@@ -300,21 +300,45 @@ impl Scene {
             ));
         }
         
-        // Fire particles above the cross (multiple small particles for realistic effect)
-        for y_offset in 0..4 {
-            for i in 0..3 {
-                let x_offset = (i as f32 - 1.0) * 0.3;
-                let z_offset = ((i + y_offset) as f32 % 3.0 - 1.0) * 0.3;
-                self.cubes.push(Cube::new(
-                    Vec3::new(
-                        campfire_x + x_offset, 
-                        0.2 + y_offset as f32 * 0.4, 
-                        campfire_z + z_offset
-                    ),
-                    Vec3::new(0.2, 0.2, 0.2),
-                    Material::fire_particle(),
-                ));
-            }
+        // Mark where fire particles start in the spheres vector
+        self.fire_particle_start_index = self.spheres.len();
+        
+        // Create dynamic fire particles as spheres (torch-like rays)
+        let campfire_x = -6.0;
+        let campfire_z = -6.0;
+        
+        // Create multiple fire particle "rays" with different trajectories
+        for i in 0..8 {
+            let angle = (i as f32) * 0.785; // ~45 degrees apart (2π/8)
+            let distance = 0.3 + (i as f32 % 3.0) * 0.1; // Varying distances from center
+            let height_offset = (i as f32 % 4.0) * 0.2; // Different starting heights
+            
+            // Create particles that will move in torch-like rays
+            self.spheres.push(Sphere::new(
+                Vec3::new(
+                    campfire_x + angle.cos() * distance,
+                    0.1 + height_offset,
+                    campfire_z + angle.sin() * distance
+                ),
+                0.08, // Small radius for particle effect
+                Material::fire_particle()
+            ));
+        }
+        
+        // Additional central fire particles for base flame
+        for i in 0..4 {
+            let height = i as f32 * 0.15;
+            let wobble = (i as f32 * 0.5).sin() * 0.1;
+            
+            self.spheres.push(Sphere::new(
+                Vec3::new(
+                    campfire_x + wobble,
+                    0.0 + height,
+                    campfire_z + wobble * 0.5
+                ),
+                0.1 + (3 - i) as f32 * 0.02, // Larger at bottom, smaller at top
+                Material::fire_particle()
+            ));
         }
 
         let tree_x = -6.0;
@@ -383,9 +407,6 @@ impl Scene {
         
         // No torch positions - torches have been removed
         self.torch_positions = vec![];
-        
-        // Mark where fire particles start in the spheres vector (no particles now)
-        self.fire_particle_start_index = self.spheres.len();
     }
 
     pub fn update(&mut self, delta_time: f32) {
@@ -410,7 +431,61 @@ impl Scene {
             0.1 + self.sun_intensity * 0.1 + night_factor * 0.05,
         );
         
-        // No fire particles to animate - torches have been removed
+        // Animate fire particles like torch rays
+        let campfire_x = -6.0;
+        let campfire_z = -6.0;
+        
+        // Update fire particle positions to create dynamic ray effect
+        for i in self.fire_particle_start_index..self.spheres.len() {
+            let particle_index = i - self.fire_particle_start_index;
+            
+            if particle_index < 8 {
+                // Outer fire rays - move them in arcs and upward
+                let base_angle = (particle_index as f32) * 0.785; // Base angle
+                let time_offset = particle_index as f32 * 0.3; // Different timing for each ray
+                let wave_time = self.time * 3.0 + time_offset;
+                
+                // Create swaying motion like torch flames
+                let sway_x = (wave_time * 1.2).sin() * 0.2;
+                let sway_z = (wave_time * 0.8).cos() * 0.15;
+                let rise = (wave_time * 2.0).sin().abs() * 0.5 + 0.3; // Particles rise and fall
+                
+                // Reset particle position if it gets too high (recycling effect)
+                let height = if rise > 1.0 { 0.1 } else { rise };
+                
+                let distance = 0.2 + (wave_time * 0.5).sin().abs() * 0.3;
+                
+                self.spheres[i].center = Vec3::new(
+                    campfire_x + (base_angle + sway_x).cos() * distance,
+                    height,
+                    campfire_z + (base_angle + sway_z).sin() * distance
+                );
+                
+                // Vary radius for flickering effect
+                self.spheres[i].radius = 0.06 + (wave_time * 4.0).sin().abs() * 0.04;
+                
+            } else {
+                // Central flame particles - vertical motion with wobble
+                let central_index = particle_index - 8;
+                let wobble_time = self.time * 4.0 + central_index as f32 * 0.5;
+                
+                let wobble_x = (wobble_time * 1.5).sin() * 0.08;
+                let wobble_z = (wobble_time * 1.8).cos() * 0.06;
+                let flicker_height = (wobble_time * 2.5).sin().abs() * 0.2 + central_index as f32 * 0.12;
+                
+                // Reset if too high
+                let height = if flicker_height > 0.8 { 0.0 } else { flicker_height };
+                
+                self.spheres[i].center = Vec3::new(
+                    campfire_x + wobble_x,
+                    height,
+                    campfire_z + wobble_z
+                );
+                
+                // Size varies with height (bigger at bottom)
+                self.spheres[i].radius = 0.08 + (0.8 - height) * 0.05 + (wobble_time * 6.0).sin().abs() * 0.02;
+            }
+        }
     }
 
     pub fn intersect(&self, ray: &Ray) -> HitInfo {

@@ -61,8 +61,8 @@ impl InputHandler {
         let backward = self.keys_pressed.contains(&VirtualKeyCode::S);
         let left = self.keys_pressed.contains(&VirtualKeyCode::A);
         let right = self.keys_pressed.contains(&VirtualKeyCode::D);
-        let up = self.keys_pressed.contains(&VirtualKeyCode::Space);
-        let down = self.keys_pressed.contains(&VirtualKeyCode::LShift);
+        let up = self.keys_pressed.contains(&VirtualKeyCode::Up);      // Changed from Space to Up arrow
+        let down = self.keys_pressed.contains(&VirtualKeyCode::Down);  // Changed from LShift to Down arrow
         
         camera.handle_keyboard_input(forward, backward, left, right, up, down, speed);
     }

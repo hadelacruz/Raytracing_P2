@@ -188,10 +188,67 @@ impl Material {
         )
     }
 
+    // Generate Minecraft-style wood pattern with dark brown and vertical light streaks
+    fn wood_pattern(position: &Vec3) -> Vec3 {
+        // Create vertical pixelated pattern like Minecraft wood logs
+        let pixel_scale_x = 8.0; // Horizontal pixel density
+        let pixel_scale_y = 16.0; // Taller pixels for vertical wood grain effect
+        let pixel_scale_z = 8.0; // Depth pixel density
+        
+        // Create pixelated pattern with different scales for x, y, z
+        let x_pixel = (position.x * pixel_scale_x).floor();
+        let y_pixel = (position.y * pixel_scale_y).floor();
+        let z_pixel = (position.z * pixel_scale_z).floor();
+        
+        // Create hash for this pixel position
+        let hash = ((x_pixel * 73.0 + y_pixel * 37.0 + z_pixel * 17.0) % 100.0).abs() / 100.0;
+        
+        // Create a secondary pattern for vertical grain variation
+        let grain_hash = ((x_pixel * 23.0 + z_pixel * 19.0) % 50.0).abs() / 50.0; // Y not included for vertical consistency
+        
+        // Minecraft wood colors - dark brown base with light beige/tan streaks
+        let very_dark_brown = 0.15;  // Base dark brown
+        let dark_brown = 0.25;       // Medium dark brown
+        let medium_brown = 0.35;     // Medium brown
+        let light_brown = 0.55;      // Light brown
+        let beige = 0.75;            // Beige/tan color
+        let light_beige = 0.9;       // Very light beige
+        
+        // Create vertical wood grain pattern - some pixels are much lighter (beige streaks)
+        let (r, g, b): (f32, f32, f32) = if hash > 0.92 && grain_hash > 0.7 {
+            // Very light beige vertical streaks (rare, prominent)
+            (light_beige, light_beige * 0.9, light_beige * 0.7)
+        } else if hash > 0.85 && grain_hash > 0.5 {
+            // Light beige streaks
+            (beige, beige * 0.85, beige * 0.65)
+        } else if hash > 0.75 {
+            // Light brown pixels
+            (light_brown, light_brown * 0.75, light_brown * 0.5)
+        } else if hash > 0.45 {
+            // Medium brown pixels  
+            (medium_brown, medium_brown * 0.7, medium_brown * 0.45)
+        } else if hash > 0.25 {
+            // Dark brown pixels
+            (dark_brown, dark_brown * 0.65, dark_brown * 0.4)
+        } else {
+            // Very dark brown base (bark-like)
+            (very_dark_brown, very_dark_brown * 0.6, very_dark_brown * 0.35)
+        };
+        
+        // Add some subtle variation within each pixel type
+        let micro_variation = (grain_hash * 0.1) - 0.05; // -0.05 to +0.05
+        
+        Vec3::new(
+            (r + micro_variation * 0.15).clamp(0.1, 1.0),
+            (g + micro_variation * 0.12).clamp(0.05, 0.95),
+            (b + micro_variation * 0.1).clamp(0.03, 0.8)
+        )
+    }
+
     pub fn stone() -> Self {
         Material {
             material_type: MaterialType::Stone,
-            albedo: Vec3::new(0.6, 0.6, 0.6),
+            albedo: Vec3::new(1.0, 1.0, 1.0), // White stone color
             reflectivity: 0.1,
             transparency: 0.0,
             refractive_index: 1.0,
@@ -215,12 +272,12 @@ impl Material {
     pub fn wood() -> Self {
         Material {
             material_type: MaterialType::Wood,
-            albedo: Vec3::new(0.6, 0.4, 0.2),
-            reflectivity: 0.05,
+            albedo: Vec3::new(0.35, 0.25, 0.15), // Darker brown base color for Minecraft-style wood
+            reflectivity: 0.02, // Less reflective like real wood
             transparency: 0.0,
             refractive_index: 1.0,
             emissive: Vec3::zero(),
-            roughness: 0.9,
+            roughness: 0.95, // Very rough surface like tree bark
         }
     }
 
@@ -389,6 +446,23 @@ impl Material {
                 
                 // Slight reflectivity variation based on leaves pattern
                 let pattern_variation = Self::pixelated_pattern(position, 6.0);
+                material.reflectivity = 0.01 + pattern_variation * 0.03;
+            },
+            MaterialType::Wood => {
+                // Apply pixelated Minecraft-style wood pattern with vertical grain
+                let base_wood_color = Self::wood_pattern(position);
+                
+                // Wood doesn't animate much, but add very subtle variation for realism
+                let subtle_variation = (time * 0.1 + position.x * 0.05).sin() * 0.01;
+                
+                material.albedo = Vec3::new(
+                    (base_wood_color.x + subtle_variation * 0.02).clamp(0.1, 1.0),
+                    (base_wood_color.y + subtle_variation * 0.015).clamp(0.05, 0.95),
+                    (base_wood_color.z + subtle_variation * 0.01).clamp(0.03, 0.8),
+                );
+                
+                // Slight reflectivity variation based on wood pattern (knots are less reflective)
+                let pattern_variation = Self::pixelated_pattern(position, 8.0);
                 material.reflectivity = 0.01 + pattern_variation * 0.03;
             },
             MaterialType::Sun => {
