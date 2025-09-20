@@ -89,11 +89,6 @@ fn main() -> Result<(), Error> {
                      *control_flow = ControlFlow::Exit;
                      return;
                  }
-                
-                // Actualizar título de ventana con FPS
-                if app.frame_count % 30 == 0 {
-                    window.set_title(&format!("Raytracer de Minecraft - {:.1} FPS", app.current_fps));
-                }
             }
             Event::MainEventsCleared => {
                 window.request_redraw();

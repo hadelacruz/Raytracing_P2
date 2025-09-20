@@ -60,7 +60,7 @@ impl App {
     }
     
     pub fn render(&self, frame: &mut [u8]) {
-        self.renderer.render(frame, &self.scene, &self.camera);
+        self.renderer.render(frame, &self.scene, &self.camera, self.current_fps);
     }
     
     pub fn handle_input(&mut self, event: &WindowEvent) {

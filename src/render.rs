@@ -15,7 +15,7 @@ impl Renderer {
         Renderer
     }
     
-    pub fn render(&self, frame: &mut [u8], scene: &Scene, camera: &Camera) {
+    pub fn render(&self, frame: &mut [u8], scene: &Scene, camera: &Camera, fps: f32) {
         // Use parallel processing to render pixels across all CPU cores with optimal chunk size
         let chunk_size = (RENDER_WIDTH * RENDER_HEIGHT) / (std::thread::available_parallelism().unwrap().get() * 4);
         let chunk_size = chunk_size.max(1).min(1024); // Ensure reasonable chunk size
@@ -39,6 +39,9 @@ impl Renderer {
                 pixel[2] = b; // Blue
                 pixel[3] = 255; // Alpha
             });
+        
+        // Draw FPS counter in the top-left corner
+        self.draw_fps_text(frame, fps);
     }
     
     fn render_pixel(&self, x: usize, y: usize, scene: &Scene, camera: &Camera) -> Vec3 {
@@ -126,5 +129,67 @@ impl Renderer {
         }
 
         color
+    }
+    
+    fn draw_fps_text(&self, frame: &mut [u8], fps: f32) {
+        // Simple bitmap font for FPS display - 5x7 characters
+        let fps_text = format!("FPS: {:.1}", fps);
+        
+        // Simple character patterns (5x7 each character)
+        let font = self.get_simple_font();
+        
+        let start_x = 5;
+        let start_y = 5;
+        
+        for (char_index, ch) in fps_text.chars().enumerate() {
+            if let Some(pattern) = font.get(&ch) {
+                for (row, &byte) in pattern.iter().enumerate() {
+                    for col in 0..5 {
+                        if (byte >> (4 - col)) & 1 == 1 {
+                            let x = start_x + char_index * 6 + col;
+                            let y = start_y + row;
+                            
+                            if x < RENDER_WIDTH && y < RENDER_HEIGHT {
+                                let pixel_index = (y * RENDER_WIDTH + x) * 4;
+                                if pixel_index + 3 < frame.len() {
+                                    frame[pixel_index] = 255;     // Red
+                                    frame[pixel_index + 1] = 255; // Green
+                                    frame[pixel_index + 2] = 255; // Blue
+                                    frame[pixel_index + 3] = 255; // Alpha
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    fn get_simple_font(&self) -> std::collections::HashMap<char, [u8; 7]> {
+        use std::collections::HashMap;
+        
+        let mut font = HashMap::new();
+        
+        // Numbers 0-9
+        font.insert('0', [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110]);
+        font.insert('1', [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110]);
+        font.insert('2', [0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b01000, 0b11111]);
+        font.insert('3', [0b01110, 0b10001, 0b00001, 0b00110, 0b00001, 0b10001, 0b01110]);
+        font.insert('4', [0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010]);
+        font.insert('5', [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110]);
+        font.insert('6', [0b01110, 0b10001, 0b10000, 0b11110, 0b10001, 0b10001, 0b01110]);
+        font.insert('7', [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b10000]);
+        font.insert('8', [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110]);
+        font.insert('9', [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b10001, 0b01110]);
+        
+        // Letters F, P, S and colon, space, dot
+        font.insert('F', [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000]);
+        font.insert('P', [0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000]);
+        font.insert('S', [0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110]);
+        font.insert(':', [0b00000, 0b01100, 0b01100, 0b00000, 0b01100, 0b01100, 0b00000]);
+        font.insert(' ', [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000]);
+        font.insert('.', [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b01100, 0b01100]);
+        
+        font
     }
 }
