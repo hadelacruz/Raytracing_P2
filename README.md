@@ -2,6 +2,10 @@
 
 Diorama de Minecraft  utilizando cubos texturizados y conceptos de Raytracer.
 
+## Video 
+
+## https://youtu.be/PtnjEEyfiZ4 ##
+
 ## Estructura del Proyecto
 
 ```
