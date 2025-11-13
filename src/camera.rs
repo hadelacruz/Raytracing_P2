@@ -67,10 +67,7 @@ impl Camera {
     pub fn handle_mouse_input(&mut self, delta_x: f32, delta_y: f32, sensitivity: f32) {
         self.yaw += delta_x * sensitivity;
         self.pitch += delta_y * sensitivity;
-        
-        // Clamp pitch to avoid gimbal lock
         self.pitch = self.pitch.clamp(-PI / 2.0 + 0.1, PI / 2.0 - 0.1);
-        
         self.update_position();
     }
 

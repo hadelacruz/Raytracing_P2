@@ -159,43 +159,27 @@ impl Scene {
         scene
     }
 
-    // Define irregular water area with multiple corners and indentations
     fn is_water_position(&self, x: i32, z: i32) -> bool {
+        let main = (x >= 2 && x <= 5 && z >= 3 && z <= 5) ||
+                   (x >= 3 && x <= 4 && z >= 2 && z <= 6) ||
+                   (x >= 1 && x <= 5 && z >= 4 && z <= 4);
         
-        // Main water body (larger than before)
-        let main_area = (x >= 2 && x <= 5 && z >= 3 && z <= 5) ||
-                        (x >= 3 && x <= 4 && z >= 2 && z <= 6) ||
-                        (x >= 1 && x <= 5 && z >= 4 && z <= 4);
-        
-        // Add extensions and corners for irregular shape
-        let extensions = 
-            // Right extension
-            (x == 6 && z >= 3 && z <= 4) ||
-            // Top extension  
-            (x >= 3 && x <= 4 && z == 1) ||
-            // Bottom left corner
-            (x == 1 && z == 5) ||
-            // Bottom right bulge
-            (x == 5 && z == 6) ||
-            // Left side indentation fill
-            (x == 2 && z == 6) ||
-            // Top right corner
-            (x == 5 && z == 2) ||
-            // Additional irregular bits
-            (x == 0 && z == 4) ||
-            (x == 4 && z == 7 && z <= 5) ||
-            // More organic connections
-            (x == 2 && z == 2) ||
-            (x == 6 && z == 5);
+        let ext = (x == 6 && z >= 3 && z <= 4) ||
+                  (x >= 3 && x <= 4 && z == 1) ||
+                  (x == 1 && z == 5) ||
+                  (x == 5 && z == 6) ||
+                  (x == 2 && z == 6) ||
+                  (x == 5 && z == 2) ||
+                  (x == 0 && z == 4) ||
+                  (x == 2 && z == 2) ||
+                  (x == 6 && z == 5);
             
-        main_area || extensions
+        main || ext
     }
 
     fn create_minecraft_world(&mut self) {
-        // Ground plane with grass on top - ORIGINAL SIZE
-        for x in -4..5 {  
-            for z in -4..5 {  
-                // Check if this position is part of the irregular water area
+        for x in -4..5 {
+            for z in -4..5 {
                 let is_water_area = self.is_water_position(x, z);
                 
                 // Dirt/stone base

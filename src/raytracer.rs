@@ -18,9 +18,8 @@ impl Raytracer {
     pub fn render(&self, framebuffer: &mut Framebuffer, scene: &Scene, camera: &Camera) {
         framebuffer.clear();
 
-        // Parallel rendering using Rayon
         let pixels: Vec<(usize, usize, Vec3)> = (0..framebuffer.height)
-            .into_par_iter()  // Parallel iterator - multi-threaded
+            .into_par_iter()
             .flat_map(|y| {
                 (0..framebuffer.width)
                     .map(|x| {
@@ -31,7 +30,6 @@ impl Raytracer {
             })
             .collect();
 
-        // Write all pixels to framebuffer
         for (x, y, color) in pixels {
             framebuffer.set_pixel(x, y, color);
         }
@@ -78,24 +76,19 @@ impl Raytracer {
             color = color + hit.material.albedo * light_intensity * Vec3::new(1.0, 0.9, 0.7);
         }
 
-        // Emissive lighting from cubes 
         for cube in &scene.cubes {
             if cube.material.emissive.length() > 0.0 {
                 let light_pos = cube.center;
                 let distance = (light_pos - hit.point).length();
                 
-                // Skip if light is too far
                 if distance > 15.0 {
                     continue;
                 }
                 
                 let light_dir = (light_pos - hit.point).normalize();
-
-                // Enhanced attenuation for better night lighting
-                let base_attenuation = 1.0 / (1.0 + 0.05 * distance + 0.005 * distance * distance);
-                // Boost emissive lighting during night time
+                let base_att = 1.0 / (1.0 + 0.05 * distance + 0.005 * distance * distance);
                 let night_boost = 1.0 + (1.0 - scene.sun_intensity) * 0.8;
-                let attenuation = base_attenuation * night_boost;
+                let attenuation = base_att * night_boost;
 
                 let shadow_ray = Ray::new(hit.point + hit.normal * 0.001, light_dir);
                 let shadow_hit = scene.intersect(&shadow_ray);

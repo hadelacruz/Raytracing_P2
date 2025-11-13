@@ -19,25 +19,15 @@ const RENDER_HEIGHT: usize = 150;
 
 fn main() {
     let mut window = Window::new(
-        "Humberto Raytracer de Minecraft - ESC para salir",
+        "Minecraft Raytracer",
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
         WindowOptions::default(),
-    )
-    .unwrap_or_else(|e| {
-        panic!("{}", e);
-    });
+    ).expect("No se pudo crear la ventana");
 
-    // Limit to max ~60 fps update rate
     window.set_target_fps(60);
 
-    println!("Minecraft Raytracer");
-    println!("Controles:");
-    println!("  WASD - Mover cámara");
-    println!("  Flecha arriba/abajo - Subir/bajar");
-    println!("  Mouse - Mirar alrededor");
-    println!("  ESC - Salir");
-    println!();
+    println!("Controles: WASD + Flechas + Mouse + ESC");
 
     let mut framebuffer = Framebuffer::new(RENDER_WIDTH, RENDER_HEIGHT);
     let aspect_ratio = RENDER_WIDTH as f32 / RENDER_HEIGHT as f32;
