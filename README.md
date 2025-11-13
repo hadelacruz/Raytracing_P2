@@ -1,32 +1,54 @@
 # Minecraft Raytracer
 
-**Autor:** Humberto Alexander de la Cruz  
+Diorama de Minecraft  utilizando cubos texturizados y conceptos de Raytracer.
 
-## 📖 Descripción del Proyecto
+## Estructura del Proyecto
 
-Este proyecto implementa un **raytracer en tiempo real** inspirado en Minecraft, desarrollado completamente en **Rust**. El programa genera un mundo 3D pixelado que simula el estilo visual característico de Minecraft, incluyendo materiales, texturas animadas, ciclos día-noche, efectos de partículas y mucho más.
-
-El raytracer utiliza técnicas avanzadas de renderizado como **reflexión**, **refracción**, **materiales emisivos**, **sombreado dinámico** y **paralelización multi-core** para lograr un rendimiento óptimo y efectos visuales impresionantes.
-
-## 🌟 Video Demostración
-
-**https://youtu.be/O6nXA2zB95E**
-
-
-## 🚀 Cómo Ejecutar el Proyecto
-
-### Prerrequisitos
-- **Rust** (versión 1.70 o superior)
-- **Cargo** (incluido con Rust)
-- Sistema operativo compatible (Windows, macOS, Linux)
-
-### Compilación y Ejecución
-
-#### Modo Debug (desarrollo):
-```bash
-cargo build
-cargo run
 ```
+src/
+├── main.rs              # Loop principal y controles
+├── framebuffer.rs       # Framebuffer personalizado
+├── raytracer.rs         # Motor de raytracing
+├── scene.rs             # Generación del mundo
+├── camera.rs            # Sistema de cámara FPS
+├── math.rs              # Vectores y matemáticas
+└── materials/           # Sistema de materiales
+    ├── mod.rs           # Definición base
+    ├── stone.rs         # Piedra
+    ├── water.rs         # Agua con reflejos
+    ├── wood.rs          # Madera
+    ├── grass.rs         # Hierba
+    ├── obsidian.rs      # Obsidiana (portales)
+    ├── sun.rs           # Sol emisivo
+    ├── fire_particle.rs # Partículas de fuego
+    └── leaves.rs        # Hojas
+```
+
+## Materiales
+
+El proyecto incluye 8 materiales con propiedades físicas:
+- **Stone**: Base del mundo
+- **Water**: Agua con reflejos y transparencia
+- **Wood**: Madera con textura procedural
+- **Grass**: Hierba con variaciones
+- **Obsidian**: Bloques oscuros para portales
+- **Sun**: Luz emisiva
+- **Fire Particle**: Partículas animadas
+- **Leaves**: Follaje con textura
+
+## Ejecutar
+
+```bash
+cargo run --release
+```
+
+## Controles
+
+- **WASD**: Movimiento
+- **Flechas**: Arriba/abajo
+- **Mouse**: Mirar (clic izquierdo)
+- **ESC**: Salir
+
 
 #### Modo Release (optimización máxima):
 ```bash
@@ -34,29 +56,13 @@ cargo build --release
 cargo run --release
 ```
 
-**Recomendación:** Usar siempre el modo `--release` para obtener el mejor rendimiento y FPS.
-
-### Controles
-
-| Tecla/Acción | Función |
-|--------------|---------|
-| **W** | Mover cámara hacia adelante |
-| **S** | Mover cámara hacia atrás |
-| **A** | Mover cámara hacia la izquierda |
-| **D** | Mover cámara hacia la derecha |
-| **Flecha ↑** | Subir cámara |
-| **Flecha ↓** | Bajar cámara |
-| **Mouse + Click izquierdo** | Rotar cámara (mirar alrededor) |
-| **ESC** | Salir del programa |
-
 ## 🎨 Materiales Implementados
 
-### Materiales Base (5 materiales únicos):
+### Materiales Base (8 materiales únicos):
 
 1. **Piedra Blanca**
    - Albedo: Blanco puro
    - Reflectividad: Baja (0.1)
-   - Transparencia: 0%
    - Textura: Sólida
 
 2. **Agua**
@@ -76,74 +82,61 @@ cargo run --release
    - Albedo: Verde natural
    - Reflectividad: Mínima (0.01)
    - **Textura animada** con variaciones de verde
-   - Efecto de viento sutil
 
 5. **Hojas**
    - Albedo: Verde variado
    - **Textura pixelada** con múltiples tonos
    - Animación de viento y movimiento
 
-### Materiales Especiales:
-
 6. **Obsidian**
    - Albedo: Negro púrpura
    - **Textura pixelada ultra-fina** 
    - Píxeles pequeños y mayormente oscuros
+   - **Torre hueca de obsidiana**
 
-7. **Portal**
-   - Albedo: Púrpura
-   - **Material emisivo** con animación pulsante
-   - Efectos de transparencia y refracción
-
-8. **Partículas de Fuego**
+7. **Partículas de Fuego**
    - **Material emisivo** intenso
    - Animación de titilante dinámico
    - Colores naranja-amarillo vibrantes
 
-9. **Sol**
+8. **Sol**
    - **Material emisivo** muy brillante
    - Animación pulsante
    - Fuente principal de luz
 
-## 🎯 Puntos de Rúbrica Implementados
+## � Mundo Generado
 
-- ✅ **Rendimiento (FPS)**
-- ✅ **Ciclo Día-Noche con Sol**
-- ✅ **Texturas Animadas**
-- ✅ **Paralelización (Threads)**
-- ✅ **Cámara y Rotación**
-- ✅ **Materiales Diversos**
-- ✅ **Refracción**
-- ✅ **Efectos de Portal**
-- ✅ **Reflexión**
-- ✅ **Materiales Emisivos (Antorchas/Fogata)**
+### Estructuras Principales
 
-## 🛠️ Tecnologías Utilizadas
+1. **Plano Base**
+   - Tierra con césped
+   - Área de agua irregular
+   - Diseño estilo Minecraft
 
-- **Lenguaje**: Rust (2021 Edition)
-- **Paralelización**: Rayon
-- **Renderizado**: Pixels + Winit
-- **Matemáticas**: Implementación propia de vectores y rayos
-- **Optimización**: Profile release con LTO
+2. **Torre de Obsidiana**
+   - Base 3x3, 8 bloques de altura
+   - **Estructura hueca** (solo bordes exteriores)
 
-## 📁 Estructura del Código
+3. **Árbol**
+   - Tronco de madera 
+   - Copa de hojas irregular
+   - Diseño orgánico tipo Minecraft
 
-```
-src/
-├── main.rs          # Punto de entrada y configuración
-├── app.rs           # Lógica principal de la aplicación
-├── render.rs        # Motor de raytracing paralelo
-├── scene.rs         # Generación del mundo y objetos
-├── materials.rs     # Sistema de materiales y texturas
-├── camera.rs        # Sistema de cámara y controles
-├── input.rs         # Manejo de entrada (teclado/mouse)
-└── math.rs          # Matemáticas vectoriales y rayos
-```
+4. **Fogata**
+   - Estructura de madera en cruz
+   - **Partículas de fuego dinámicas** (esferas emisivas)
+   - Efecto tipo antorcha con rayos de fuego
 
-## 🚀 Optimizaciones de Rendimiento
+## 🎯 Características Técnicas
 
-- **Renderizado paralelo** con división automática de trabajo
-- **Compilación optimizada** con LTO y codegen-units=1
-- **Chunking inteligente** para balance de carga
-- **Gamma correction** para mejor calidad visual
-- **Clamp de colores** para prevenir overflow
+### Rendering
+- ✅ **Ciclo Día-Noche** con sol dinámico
+- ✅ **Noches extremadamente oscuras** (luz ambiente 0.003)
+- ✅ **Texturas Animadas** procedurales
+- ✅ **Refracción** en agua
+- ✅ **Reflexión** en superficies
+- ✅ **Materiales Emisivos** con boost nocturno
+- ✅ **Cámara FPS** con controles suaves
+
+
+

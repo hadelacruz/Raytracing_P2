@@ -161,8 +161,6 @@ impl Scene {
 
     // Define irregular water area with multiple corners and indentations
     fn is_water_position(&self, x: i32, z: i32) -> bool {
-        // Create a more complex, irregular water shape
-        // This creates a lake-like shape with multiple corners and curves
         
         // Main water body (larger than before)
         let main_area = (x >= 2 && x <= 5 && z >= 3 && z <= 5) ||
@@ -185,7 +183,7 @@ impl Scene {
             (x == 5 && z == 2) ||
             // Additional irregular bits
             (x == 0 && z == 4) ||
-            (x == 4 && z == 7 && z <= 5) || // This condition will be false, keeping for structure
+            (x == 4 && z == 7 && z <= 5) ||
             // More organic connections
             (x == 2 && z == 2) ||
             (x == 6 && z == 5);
@@ -194,9 +192,9 @@ impl Scene {
     }
 
     fn create_minecraft_world(&mut self) {
-        // Ground plane with grass on top
-        for x in -4..5 {
-            for z in -4..5 {
+        // Ground plane with grass on top - ORIGINAL SIZE
+        for x in -4..5 {  
+            for z in -4..5 {  
                 // Check if this position is part of the irregular water area
                 let is_water_area = self.is_water_position(x, z);
                 
@@ -207,7 +205,7 @@ impl Scene {
                     Material::stone(),
                 ));
                 
-                // Grass layer on top (skip in water area)
+                // Grass layer on top 
                 if !is_water_area {
                     self.cubes.push(Cube::new(
                         Vec3::new(x as f32 * 2.0, -0.7, z as f32 * 2.0),
@@ -219,8 +217,8 @@ impl Scene {
         }
 
         // Create irregular water area
-        for x in -4..5 {
-            for z in -4..5 {
+        for x in -4..5 {  
+            for z in -4..5 {  
                 if self.is_water_position(x, z) {
                     self.cubes.push(Cube::new(
                         Vec3::new(x as f32 * 2.0, -0.7, z as f32 * 2.0),
@@ -231,44 +229,51 @@ impl Scene {
             }
         }
 
-        // Enhanced Nether Portal with obsidian frame - Moved to center
-        // Portal frame (obsidian)
-        for y in 0..5 {
-            // Left pillar
-            self.cubes.push(Cube::new(
-                Vec3::new(-1.0, y as f32, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Material::obsidian(),
-            ));
-            // Right pillar
-            self.cubes.push(Cube::new(
-                Vec3::new(1.0, y as f32, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Material::obsidian(),
-            ));
-        }
-        // Top and bottom frame
-        for x in -1..2 {
-            // Bottom
-            self.cubes.push(Cube::new(
-                Vec3::new(x as f32, -1.0, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Material::obsidian(),
-            ));
-            // Top
-            self.cubes.push(Cube::new(
-                Vec3::new(x as f32, 4.0, 0.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Material::obsidian(),
-            ));
-        }
-        // Portal interior (larger)
-        for y in 0..4 {
-            self.cubes.push(Cube::new(
-                Vec3::new(0.0, y as f32, 0.0),
-                Vec3::new(0.8, 1.0, 0.2),
-                Material::portal(),
-            ));
+        // Two Nether Portals facing each other (like Minecraft)
+        // Portal 1: Facing North-South 
+        let portal1_x = -3.0;
+        let portal1_z = 0.0;
+        
+        // Portal 2: Facing North-South 
+        let portal2_x = 3.0;
+        
+        // Build both portals with the same structure
+        for portal_x in [portal1_x, portal2_x].iter() {
+            // Bottom frame (horizontal)
+            for x_offset in -1..=1 {
+                self.cubes.push(Cube::new(
+                    Vec3::new(portal_x + x_offset as f32, 0.0, portal1_z),
+                    Vec3::new(1.0, 1.0, 1.0),
+                    Material::obsidian(),
+                ));
+            }
+            
+            // Left column (vertical)
+            for y in 0..=4 {
+                self.cubes.push(Cube::new(
+                    Vec3::new(portal_x - 1.0, y as f32, portal1_z),
+                    Vec3::new(1.0, 1.0, 1.0),
+                    Material::obsidian(),
+                ));
+            }
+            
+            // Right column (vertical)
+            for y in 0..=4 {
+                self.cubes.push(Cube::new(
+                    Vec3::new(portal_x + 1.0, y as f32, portal1_z),
+                    Vec3::new(1.0, 1.0, 1.0),
+                    Material::obsidian(),
+                ));
+            }
+            
+            // Top frame (horizontal)
+            for x_offset in -1..=1 {
+                self.cubes.push(Cube::new(
+                    Vec3::new(portal_x + x_offset as f32, 4.0, portal1_z),
+                    Vec3::new(1.0, 1.0, 1.0),
+                    Material::obsidian(),
+                ));
+            }
         }
 
         // Add a sun sphere in the sky
@@ -279,7 +284,7 @@ impl Scene {
         ));
 
         // Campfire in the corner (wooden cross with fire particles)
-        let campfire_x = -6.0; // Corner position
+        let campfire_x = -6.0;  
         let campfire_z = -6.0;
         
         // Wooden cross structure
@@ -309,9 +314,9 @@ impl Scene {
         
         // Create multiple fire particle "rays" with different trajectories
         for i in 0..8 {
-            let angle = (i as f32) * 0.785; // ~45 degrees apart (2π/8)
-            let distance = 0.3 + (i as f32 % 3.0) * 0.1; // Varying distances from center
-            let height_offset = (i as f32 % 4.0) * 0.2; // Different starting heights
+            let angle = (i as f32) * 0.785; 
+            let distance = 0.3 + (i as f32 % 3.0) * 0.1; 
+            let height_offset = (i as f32 % 4.0) * 0.2; 
             
             // Create particles that will move in torch-like rays
             self.spheres.push(Sphere::new(
@@ -320,7 +325,7 @@ impl Scene {
                     0.1 + height_offset,
                     campfire_z + angle.sin() * distance
                 ),
-                0.08, // Small radius for particle effect
+                0.08, 
                 Material::fire_particle()
             ));
         }
@@ -336,15 +341,15 @@ impl Scene {
                     0.0 + height,
                     campfire_z + wobble * 0.5
                 ),
-                0.1 + (3 - i) as f32 * 0.02, // Larger at bottom, smaller at top
+                0.1 + (3 - i) as f32 * 0.02, 
                 Material::fire_particle()
             ));
         }
 
-        let tree_x = -6.0;
+        let tree_x = -6.0;  
         let tree_z = 6.0;   
         
-        // Tree trunk (reduced height: 3 blocks instead of 4)
+        // Tree trunk
         for y in 0..3 {
             self.cubes.push(Cube::new(
                 Vec3::new(tree_x, y as f32, tree_z),
@@ -353,14 +358,12 @@ impl Scene {
             ));
         }
         
-        // Irregular leaf canopy (like a small mountain of leaves) - restored to full size
-        // Bottom layer of leaves (widest)
+        // Bottom layer of leaves (largest)
         for x_offset in -2i32..3i32 {
             for z_offset in -2i32..3i32 {
                 let distance_from_center = (x_offset.abs() + z_offset.abs()) as f32;
-                // Create irregular shape - not all positions have leaves
                 if distance_from_center <= 3.0 && 
-                   !(x_offset.abs() == 2 && z_offset.abs() == 2) { // Remove corners
+                   !(x_offset.abs() == 2 && z_offset.abs() == 2) { 
                     self.cubes.push(Cube::new(
                         Vec3::new(tree_x + x_offset as f32, 2.5, tree_z + z_offset as f32),
                         Vec3::new(1.0, 0.8, 1.0),
@@ -370,7 +373,7 @@ impl Scene {
             }
         }
         
-        // Middle layer of leaves (medium size)
+        // Middle layer of leaves 
         for x_offset in -1i32..2i32 {
             for z_offset in -1i32..2i32 {
                 let distance_from_center = (x_offset.abs() + z_offset.abs()) as f32;
@@ -384,11 +387,11 @@ impl Scene {
             }
         }
         
-        // Top layer of leaves (smallest)
+        // Top layer of leaves
         for x_offset in -1i32..2i32 {
             for z_offset in -1i32..2i32 {
                 if x_offset.abs() <= 1 && z_offset.abs() <= 1 && 
-                   !(x_offset.abs() == 1 && z_offset.abs() == 1) { // Remove diagonal corners
+                   !(x_offset.abs() == 1 && z_offset.abs() == 1) { 
                     self.cubes.push(Cube::new(
                         Vec3::new(tree_x + x_offset as f32, 4.5, tree_z + z_offset as f32),
                         Vec3::new(1.0, 0.8, 1.0),
@@ -398,7 +401,7 @@ impl Scene {
             }
         }
         
-        // Peak of the tree (single leaf block)
+        // Peak of the tree 
         self.cubes.push(Cube::new(
             Vec3::new(tree_x, 5.5, tree_z),
             Vec3::new(1.0, 0.8, 1.0),
@@ -413,17 +416,15 @@ impl Scene {
         self.time += delta_time;
         
         // Update sun position for day-night cycle
-        let day_cycle = self.time * 0.2; // Slow day-night cycle
+        let day_cycle = self.time * 0.2; 
         self.sun_position = Vec3::new(
             day_cycle.cos() * 15.0,
             (day_cycle.sin() * 10.0).max(2.0),
             10.0,
         );
         
-        // Update sun intensity
         self.sun_intensity = (day_cycle.sin().max(0.0) * 0.8 + 0.2).max(0.1);
         
-        // Update ambient light based on time of day
         let night_factor = (1.0 - self.sun_intensity).max(0.0);
         self.ambient_light = Vec3::new(
             0.05 + self.sun_intensity * 0.15,
@@ -435,22 +436,21 @@ impl Scene {
         let campfire_x = -6.0;
         let campfire_z = -6.0;
         
-        // Update fire particle positions to create dynamic ray effect
         for i in self.fire_particle_start_index..self.spheres.len() {
             let particle_index = i - self.fire_particle_start_index;
             
             if particle_index < 8 {
                 // Outer fire rays - move them in arcs and upward
-                let base_angle = (particle_index as f32) * 0.785; // Base angle
-                let time_offset = particle_index as f32 * 0.3; // Different timing for each ray
+                let base_angle = (particle_index as f32) * 0.785; 
+                let time_offset = particle_index as f32 * 0.3; 
                 let wave_time = self.time * 3.0 + time_offset;
                 
                 // Create swaying motion like torch flames
                 let sway_x = (wave_time * 1.2).sin() * 0.2;
                 let sway_z = (wave_time * 0.8).cos() * 0.15;
-                let rise = (wave_time * 2.0).sin().abs() * 0.5 + 0.3; // Particles rise and fall
+                let rise = (wave_time * 2.0).sin().abs() * 0.5 + 0.3; 
                 
-                // Reset particle position if it gets too high (recycling effect)
+                // Reset particle position if it gets too high 
                 let height = if rise > 1.0 { 0.1 } else { rise };
                 
                 let distance = 0.2 + (wave_time * 0.5).sin().abs() * 0.3;
@@ -482,7 +482,6 @@ impl Scene {
                     campfire_z + wobble_z
                 );
                 
-                // Size varies with height (bigger at bottom)
                 self.spheres[i].radius = 0.08 + (0.8 - height) * 0.05 + (wobble_time * 6.0).sin().abs() * 0.02;
             }
         }
@@ -508,23 +507,10 @@ impl Scene {
         closest_hit
     }
 
-    pub fn get_sky_color(&self, direction: &Vec3) -> Vec3 {
-        let t = (direction.y + 1.0) * 0.5;
-        let day_sky = Vec3::new(0.5, 0.7, 1.0);
-        let night_sky = Vec3::new(0.05, 0.05, 0.2);
-        let horizon = Vec3::new(1.0, 0.8, 0.6);
+    pub fn get_sky_color(&self, _direction: &Vec3) -> Vec3 {
+        let day_sky = Vec3::new(0.5, 0.7, 1.0);      
+        let night_sky = Vec3::new(0.08, 0.08, 0.18); 
         
-        let sky_color = day_sky.lerp(&night_sky, 1.0 - self.sun_intensity);
-        let final_color = horizon.lerp(&sky_color, t);
-        
-        // Add stars at night
-        if self.sun_intensity < 0.3 {
-            let star_noise = ((direction.x * 100.0).sin() * (direction.z * 100.0).cos()).abs();
-            if star_noise > 0.99 {
-                return final_color + Vec3::new(0.8, 0.8, 1.0) * (1.0 - self.sun_intensity);
-            }
-        }
-        
-        final_color
+        day_sky.lerp(&night_sky, 1.0 - self.sun_intensity)
     }
 }

@@ -2,98 +2,96 @@ mod math;
 mod materials;
 mod camera;
 mod scene;
-mod app;
-mod render;
-mod input;
+mod framebuffer;
+mod raytracer;
 
-use app::App;
-use pixels::{Error, Pixels, SurfaceTexture};
-use winit::{
-    dpi::LogicalSize,
-    event::{Event, WindowEvent, ElementState, VirtualKeyCode},
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
-};
+use minifb::{Key, Window, WindowOptions};
+use framebuffer::Framebuffer;
+use raytracer::Raytracer;
+use camera::Camera;
+use scene::Scene;
 use std::time::Instant;
-use rayon::ThreadPoolBuilder;
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const WINDOW_WIDTH: usize = 800;
+const WINDOW_HEIGHT: usize = 600;
+const RENDER_WIDTH: usize = 200;
+const RENDER_HEIGHT: usize = 150;
 
-fn main() -> Result<(), Error> {
-    // Configure Rayon to use all available CPU cores
-    let num_cpus = std::thread::available_parallelism().unwrap().get();
-    ThreadPoolBuilder::new()
-        .num_threads(num_cpus)
-        .build_global()
-        .expect("Failed to build thread pool");
-    
-    println!("Minecraft");
-    println!("Usando {} núcleos de CPU para renderizado paralelo", num_cpus);
+fn main() {
+    let mut window = Window::new(
+        "Humberto Raytracer de Minecraft - ESC para salir",
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        WindowOptions::default(),
+    )
+    .unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
+
+    // Limit to max ~60 fps update rate
+    window.set_target_fps(60);
+
+    println!("Minecraft Raytracer");
     println!("Controles:");
     println!("  WASD - Mover cámara");
     println!("  Flecha arriba/abajo - Subir/bajar");
-    println!("  Arrastrar ratón - Mirar alrededor");
+    println!("  Mouse - Mirar alrededor");
     println!("  ESC - Salir");
     println!();
-    
-    let event_loop = EventLoop::new();
-    let window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
-        WindowBuilder::new()
-            .with_title("Humberto Raytracer de Minecraft")
-            .with_inner_size(size)
-            .with_min_inner_size(size)
-            .build(&event_loop)
-            .unwrap()
-    };
 
-    let mut pixels = {
-        let window_size = window.inner_size();
-        let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        Pixels::new(200, 150, surface_texture)?
-    };
+    let mut framebuffer = Framebuffer::new(RENDER_WIDTH, RENDER_HEIGHT);
+    let aspect_ratio = RENDER_WIDTH as f32 / RENDER_HEIGHT as f32;
+    let mut camera = Camera::new(aspect_ratio);
+    camera.set_target(math::Vec3::new(0.0, 0.0, 0.0));
 
-    let mut app = App::new();
-    
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            }
-            Event::WindowEvent { event, .. } => {
-                // Handle ESC key for exit
-                if let WindowEvent::KeyboardInput { input: key_event, .. } = &event {
-                    if let Some(VirtualKeyCode::Escape) = key_event.virtual_keycode {
-                        if key_event.state == ElementState::Pressed {
-                            println!("ESC presionado - saliendo");
-                            *control_flow = ControlFlow::Exit;
-                            return;
-                        }
-                    }
+    let mut scene = Scene::new();
+    let raytracer = Raytracer::new();
+
+    let mut last_time = Instant::now();
+    let mut fps_count = 0;
+    let mut fps_start = Instant::now();
+
+    let mut last_mouse_pos: Option<(f32, f32)> = None;
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        let delta = Instant::now().duration_since(last_time).as_secs_f32();
+        last_time = Instant::now();
+
+        fps_count += 1;
+        if fps_start.elapsed().as_secs() >= 1 {
+            window.set_title(&format!("Maincraft - {} FPS", fps_count));
+            fps_count = 0;
+            fps_start = Instant::now();
+        }
+
+        let speed = 5.0 * delta;
+
+        let forward = window.is_key_down(Key::W);
+        let backward = window.is_key_down(Key::S);
+        let left = window.is_key_down(Key::A);
+        let right = window.is_key_down(Key::D);
+        let up = window.is_key_down(Key::Up);
+        let down = window.is_key_down(Key::Down);
+
+        camera.handle_keyboard_input(forward, backward, left, right, up, down, speed);
+
+        if let Some((mx, my)) = window.get_mouse_pos(minifb::MouseMode::Clamp) {
+            if window.get_mouse_down(minifb::MouseButton::Left) {
+                if let Some((last_x, last_y)) = last_mouse_pos {
+                    let delta_x = mx - last_x;
+                    let delta_y = my - last_y;
+                    camera.handle_mouse_input(delta_x * 0.005, -delta_y * 0.005, 1.0);
                 }
-                app.handle_input(&event);
+                last_mouse_pos = Some((mx, my));
+            } else {
+                last_mouse_pos = None;
             }
-            Event::RedrawRequested(_) => {
-                let now = Instant::now();
-                let delta_time = now.duration_since(app.last_frame_time).as_secs_f32();
-                app.last_frame_time = now;
-                
-                app.update(delta_time);
-                app.render(pixels.frame_mut());
-                
-                if pixels.render().is_err() {
-                     *control_flow = ControlFlow::Exit;
-                     return;
-                 }
-            }
-            Event::MainEventsCleared => {
-                window.request_redraw();
-            }
-            _ => {}
-         }
-     })
+        }
+
+        scene.update(delta);
+        raytracer.render(&mut framebuffer, &scene, &camera);
+
+        let window_buffer = framebuffer.to_u32_buffer();
+        window.update_with_buffer(&window_buffer, RENDER_WIDTH, RENDER_HEIGHT).unwrap();
+    }
 }

@@ -5,10 +5,8 @@ edition = "2021"
 authors = ["Humberto de la Cruz"]
 
 [dependencies]
-winit = "0.28"
-pixels = "0.13"
-bytemuck = { version = "1.14", features = ["derive"] }
-rayon = "1.8"
+minifb = "0.27"
+rayon = "1.10"
 
 [profile.release]
 opt-level = 3
